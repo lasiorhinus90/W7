@@ -1,0 +1,65 @@
+---
+title: "Week 7 Assingment"
+author: "Ione Arbilla"
+date: "13/11/2021"
+output:
+  html_document:
+    df_print: paged
+---
+## Importing dataset
+
+Reading csv file in RDataset obtained from Jobs dataset in https://data.worldbank.org/ and not importing lines located at the end of the document with the filter function.
+
+
+```{r setup,include=FALSE,echo=FALSE}
+library(dplyr)
+Dataset<-read.csv("Jobs_Database_Dataset.csv")%>%
+  filter(row_number() <= n()-5)
+```
+## Diagnose of the dataset
+
+This dataset  is wide formatted data, so we will need some pivoting. I created a variable called year to address the problem. I also decided to use parse_number to get rid of the leters and extra numbers that made difficult to read the years. Then I mutated the value column to identify the NA values as NA insetad of ".." and converted it to numeric, since the column is indeed numeric. Finally I altered the column names, round the decimals of the value columns and made a selection of the dataset that i believe could be adequate to compare the indices of two different countries:
+
+```{r cars,echo=FALSE,include=FALSE}
+library(tidyr)
+library(rlang)
+library(readr)
+
+
+Dataset%>%
+  pivot_longer(`X2011..YR2011.`:`X2016..YR2016.`,names_to = "year")%>%
+  mutate(year=parse_number(year))%>%
+  mutate(value=na_if(value,".."))%>%
+  mutate(value=as.numeric(value))%>%
+  select(ï..Country.Name, Series.Name,year,value)%>%
+  set_names(c("Country","Indices","Year","Value"))%>%
+  mutate(across(where(is.numeric), round, 1))%>%
+  filter((Country=="Afghanistan"& Year == 2011)|(Country=="Burundi"& Year == 2011))%>% 
+  write.csv("Table.csv")
+
+```
+```{r,echo=FALSE}
+Table<-read.csv("Table.csv")
+Table
+
+```
+
+### Including Plots
+ Here I added the plots that compare the indices of the selected countries in the year 2011 except of one index which was in a different unit.
+ 
+ <p>&nbsp;</p>                                                                                                                                                                                              
+
+```{r pressure, echo=FALSE}
+library(ggplot2)
+Table<-read.csv("Table.csv")
+
+ggplot(subset(Table, Indices %in% c("Access to electricity (% of population)",
+"Adolescent fertility rate (births per 1,000 women ages 15-19)",
+"Age dependency ratio (% of working-age population)",
+"Agriculture, value added (% of GDP)",
+"Agriculture, value added (annual % growth)"))) +
+geom_col(aes(x=Country,y=Value,fill=Indices,group=Indices),position="dodge")+theme_light()
+
+```
+<p>&nbsp;</p>                                                                                                                                                                                              
+
